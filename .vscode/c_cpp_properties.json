@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "name": "ia16-elf",
+            "includePath": ["${workspaceFolder}/**"],
+            "defines": ["COMPILER_TYPE=COMPILER_GCC", "VSCODE"]
+        }
+    ],
+    "version": 4
+}
