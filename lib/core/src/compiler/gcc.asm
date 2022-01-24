@@ -3,32 +3,40 @@ bits 16
 
 section .text
 
+    ;; VOID
+    ;; CallInterruptWithSegments(
+    ;;     BYTE Interrupt,
+    ;;     PREGISTERS Registers,
+    ;;     PSEGMENTREGS Segments);
     global CallInterruptWithSegments
     CallInterruptWithSegments:
+        %push
+        %stacksize flat
+        %assign %$localsize 0
+        
+        %arg Interrupt:word, \
+             Registers:word, \
+             Segments:word
+    
+        %local SavedDi:word
+
         push bp
         mov bp, sp
+        sub sp, %$localsize
 
-        ; Saved for later
-        sub sp, 2
-
-        push bx
-        push cx
-        push dx
-        push si
-        push di
         push ds
         push es
-
-        mov al, byte [bp + 8]
-        mov byte [cs:.Vector], al
-
-        mov si, word [bp + 12]
-        mov ds, word [si + 0]
-        mov es, word [si + 2]
-
-        mov di, word [bp + 10]
+        push si
         push di
 
+        mov ax, word [Interrupt]
+        mov byte [.Vector], al
+
+        mov di, word [Segments]
+        mov ds, word [di + 0]
+        mov es, word [di + 2]
+
+        mov di, word [Registers]
         mov ax, word [di + 0]
         mov bx, word [di + 2]
         mov cx, word [di + 4]
@@ -36,40 +44,29 @@ section .text
         mov si, word [di + 8]
         mov di, word [di + 10]
 
-        push ax
-        mov ah, 0x0e
-        mov al, '!'
-        int 0x10
-        pop ax
-        jmp $
-
-        .Opcode: db 0xcd ; int iw
+        .Opcode: db 0xcd
         .Vector: db 0x03
 
-        mov word [bp - 2], di
-        pop di
-
+        mov word [SavedDi], di
+        mov di, word [Segments]
         mov word [di + 0], ax
         mov word [di + 2], bx
         mov word [di + 4], cx
         mov word [di + 6], dx
         mov word [di + 8], si
-        mov ax, word [bp - 2]
+        mov ax, word [SavedDi]
         mov word [di + 10], ax
 
+        mov di, word [Segments]
+        mov word [di + 0], ds
+        mov word [di + 2], es
+
+        pop si
+        pop di
         pop es
         pop ds
-        pop di
-        pop si
-        pop dx
-        pop cx
-        pop bx
 
+        add sp, %$localsize
         pop bp
         ret
-    
-    global GetCurrentSegmentRegisters
-    GetCurrentSegmentRegisters:
-        mov ax, ds
-        mov dx, es
-        ret
+        %pop

@@ -6,26 +6,29 @@
 #define SCREEN_WIDTH 80
 #define SCREEN_HEIGHT 25
 
-#define MAKE_CHAR(Char, Color) \
-    (AS_WORD(Char) | (AS_WORD(Color) << 8))
+#define ATTRIBUTE(Fg, Bg) \
+    ((Bg) << 4 | (Fg))
+
+#define CELL(Char, Attr) \
+    (AS_WORD(Char) | AS_WORD(Attr) << 8)
 
 typedef enum {
-    COLOR_BLACK,
-    COLOR_DARK_BLUE,
-    COLOR_DARK_GREEN,
-    COLOR_DARK_CYAN,
-    COLOR_DARK_RED,
-    COLOR_DARK_MAGENTA,
-    COLOR_BROWN,
-    COLOR_LIGHT_GRAY,
-    COLOR_DARK_GRAY,
-    COLOR_LIGHT_BLUE,
-    COLOR_LIGHT_GREEN,
-    COLOR_LIGHT_CYAN,
-    COLOR_LIGHT_RED,
-    COLOR_LIGHT_MAGENTA,
-    COLOR_YELLOW,
-    COLOR_WHITE
+    BLACK,
+    DARK_BLUE,
+    DARK_GREEN,
+    DARK_CYAN,
+    DARK_RED,
+    DARK_MAGENTA,
+    BROWN,
+    LIGHT_GRAY,
+    DARK_GRAY,
+    LIGHT_BLUE,
+    LIGHT_GREEN,
+    LIGHT_CYAN,
+    LIGHT_RED,
+    LIGHT_MAGENTA,
+    YELLOW,
+    WHITE
 } COLOR;
 
 #define POS(X, Y) ((CONPOS){(X), (Y)})
@@ -41,12 +44,30 @@ VOID
 ClearScreen(VOID);
 
 VOID
+SetScreenEnabled(BOOL Enabled);
+
+BOOL
+IsScreenEnabled(VOID);
+
+VOID
 MoveCursor(CONPOS Position);
 
 CONPOS
 GetCursorPosition(VOID);
 
+BOOL
+IsCursorVisible(VOID);
+
 VOID
-PrintString(PCSTR String);
+SetCursorVisible(BOOL Visible);
+
+VOID
+WriteAt(
+    CONPOS Position,
+    BYTE Attribute,
+    PCSTR Text);
+
+VOID
+PrintCriticalError(PCSTR String);
 
 #endif

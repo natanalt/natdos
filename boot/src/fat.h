@@ -4,13 +4,13 @@
 #include <natdos/core/core.h>
 #include "disk.h"
 
-#define FAT_READ_ONLY (1 << 0)
-#define FAT_HIDDEN    (1 << 1)
-#define FAT_SYSTEM    (1 << 2)
-#define FAT_VOLUME_ID (1 << 3)
-#define FAT_DIRECTORY (1 << 4)
-#define FAT_ARCHIVE   (1 << 5)
-#define FAT_LFN       (FAT_READ_ONLY | FAT_HIDDEN | FAT_SYSTEM | FAT_VOLUME_ID)
+#define FAT_READ_ONLY  (1 << 0)
+#define FAT_HIDDEN     (1 << 1)
+#define FAT_SYSTEM     (1 << 2)
+#define FAT_VOLUME_ID  (1 << 3)
+#define FAT_DIRECTORY  (1 << 4)
+#define FAT_ARCHIVE    (1 << 5)
+#define FAT_LFN        (FAT_READ_ONLY | FAT_HIDDEN | FAT_SYSTEM | FAT_VOLUME_ID)
 
 typedef struct {
     CHAR FileName[8];
@@ -29,12 +29,12 @@ typedef struct {
 } PACKED TYPEDEF_STRUCT(FATDENTRY);
 
 VOID
-OpenFat(PMEDIA Media);
+InitFat(PMEDIA Media);
 
 BOOL
 FindRootFile(PCSTR Name, PFATDENTRY Result);
 
 VOID
-ReadFile(PFATDENTRY Entry, VOID* Target);
+ReadFile(PFATDENTRY Entry, PVOID Target);
 
 #endif

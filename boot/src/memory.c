@@ -2,22 +2,22 @@
 
 extern BYTE FreeStart;
 
-STATIC BYTE* Heap;
+STATIC PBYTE Heap;
 STATIC SIZE UsedHeap;
 STATIC SIZE TotalHeap;
 
 VOID
 InitAllocator(VOID)
 {
-    Heap = AS(BYTE*, &FreeStart);
+    Heap = AS(PBYTE, &FreeStart);
     UsedHeap = 0;
     TotalHeap = 24 * 1024;
 }
 
-VOID*
+PVOID
 AllocateMemory(SIZE Bytes)
 {
-    VOID* Result = Heap;
+    PVOID Result = Heap;
     UsedHeap += Bytes;
     return Result;
 }

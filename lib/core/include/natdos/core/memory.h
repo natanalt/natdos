@@ -43,4 +43,7 @@ SetFarMemoryWords(
 
 #endif
 
+SIZE
+GetStringSize(PCSTR String);
+
 #endif

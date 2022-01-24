@@ -1,18 +1,30 @@
 #include "screen.h"
 
 STATIC CONPOS CurrentPosition;
+STATIC BOOL CursorVisible;
+STATIC BOOL ScreenEnabled;
+
+STATIC LPWORD
+GetBufferAddressFor(CONPOS Position)
+{
+    LPWORD Base = MAKE_FAR(0xb800, 0);
+    return Base + (Position.Y * SCREEN_WIDTH + Position.X);
+}
 
 VOID
 InitScreen(VOID)
 {
-    // TODO: configure the CGA manually instead of using the BIOS 
+    // Enable high intensity colour
+    // TODO: configure the CGA manually instead of using the BIOS
     REGISTERS Registers;
     Registers.A.W = 0x1003;
     Registers.B.W = 0;
     CallInterrupt(0x10, &Registers);
 
     ClearScreen();
+    SetCursorVisible(FALSE);
     MoveCursor(POS(0, 0));
+    SetScreenEnabled(TRUE);
 }
 
 VOID
@@ -20,16 +32,29 @@ ClearScreen(VOID)
 {
     SetFarMemoryWords(
         MAKE_FAR(0xb800, 0),
-        MAKE_CHAR(' ', COLOR_BLACK),
-        80 * 25);
+        CELL(' ', ATTRIBUTE(WHITE, BLACK)),
+        SCREEN_WIDTH * SCREEN_HEIGHT);
+}
+
+VOID
+SetScreenEnabled(BOOL Enabled)
+{
+    // TODO: enable/disable the screen on the CGA
+    ScreenEnabled = Enabled;
+}
+
+BOOL
+IsScreenEnabled(VOID)
+{
+    return ScreenEnabled;
 }
 
 VOID
 MoveCursor(CONPOS Position)
 {
     REGISTERS Registers;
-    Registers.A.B.H = 2;
-    Registers.B.B.H = 0;
+    Registers.A.W = 0x0200;
+    Registers.B.W = 0;
     Registers.D.B.H = Position.Y;
     Registers.D.B.L = Position.X;
     CallInterrupt(0x10, &Registers);
@@ -43,45 +68,47 @@ GetCursorPosition(VOID)
     return CurrentPosition;
 }
 
-STATIC VOID
-ScrollScreen(VOID)
+VOID
+SetCursorVisible(BOOL Visible)
 {
-    TODO("ScrollScreen");
+    REGISTERS Registers;
+    Registers.A.W = 0x0100;
+    Registers.C.W = Visible ? 0x0607 : 0x2000;
+    CallInterrupt(0x10, &Registers);
+
+    CursorVisible = Visible;
 }
 
-STATIC VOID
-AdvanceInternalCursor(VOID)
+BOOL
+IsCursorVisible(VOID)
 {
-    CurrentPosition.X += 1;
-    if (CurrentPosition.X >= SCREEN_WIDTH)
-    {
-        CurrentPosition.X = 0;
-        CurrentPosition.Y += 1;
-        if (CurrentPosition.Y >= SCREEN_HEIGHT)
-        {
-            CurrentPosition.Y = SCREEN_HEIGHT - 1;
-            ScrollScreen();
-        }
-    }
-}
-
-STATIC VOID
-PlaceAt(
-    CONPOS Position,
-    WORD Value)
-{
-    WORD Index = AS_WORD(Position.Y) * SCREEN_WIDTH + Position.X;
-    MAKE_FAR_AS(LPWORD, 0xb800, 0)[Index] = Value;
+    return CursorVisible;
 }
 
 VOID
-PrintString(PCSTR String)
+WriteAt(
+    CONPOS Position,
+    BYTE Attribute,
+    PCSTR Text)
 {
-    while (*String)
-    {
-        CHAR Current = *(String++);
+    LPWORD CurrentAddr = GetBufferAddressFor(Position);
+    CHAR CurrentChar;
 
-        PlaceAt(CurrentPosition, MAKE_CHAR(Current, COLOR_WHITE));      
-        AdvanceInternalCursor();
-    }
+    while (CurrentChar = *(Text++))
+        *(CurrentAddr++) = CELL(CurrentChar, Attribute);
+}
+
+VOID
+PrintCriticalError(PCSTR String)
+{
+    WORD Top = 11;
+
+    SIZE Length = GetStringSize(String);
+    BYTE LeftX = (SCREEN_WIDTH / 2) - (Length / 2);
+
+    WriteAt(POS(LeftX, Top), ATTRIBUTE(LIGHT_RED, BLACK), String);
+    SetFarMemoryWords(
+        GetBufferAddressFor(POS(LeftX - 1, Top + 1)),
+        CELL(223, ATTRIBUTE(DARK_RED, BLACK)),
+        Length + 2);
 }

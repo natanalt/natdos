@@ -32,7 +32,7 @@ section .text
         .FatAmount:        db 2
         .RootDentryAmount: dw 224
         .SectorAmount:     dw 2880
-        .MediaDescriptor:  db 0xF0
+        .MediaDescriptor:  db 0xf0
         .FatSectors:       dw 9
         .TrackSectors:     dw 18
         .HeadAmount:       dw 2
@@ -41,7 +41,7 @@ section .text
         .DriveNumber:      db 0
         .NtFlags:          db 0
         .Signature:        db 0x28
-        .VolumeSerial:     dd 0xB00B1234
+        .VolumeSerial:     dd 0xb00b1234
         .VolumeLabel:      db "NatDOS Live"
         .FsId:             db "FAT12   "
     

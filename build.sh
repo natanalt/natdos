@@ -30,6 +30,7 @@ $CC $CFLAGS -c -o out/obj/boot/main.o   boot/src/main.c
 $CC $CFLAGS -c -o out/obj/boot/disk.o   boot/src/disk.c
 $CC $CFLAGS -c -o out/obj/boot/screen.o boot/src/screen.c
 $CC $CFLAGS -c -o out/obj/boot/memory.o boot/src/memory.c
+$CC $CFLAGS -c -o out/obj/boot/fat.o    boot/src/fat.c
 nasm -f elf32 -o out/obj/boot/entry.o boot/src/entry.asm
 
 $CC $CFLAGS -T boot/boot.ld -o out/system/natboot.sys out/obj/boot/*.o -lcore -lgcc

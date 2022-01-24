@@ -55,13 +55,38 @@ LbaToChs(PMEDIA Media, LBA Lba)
     return Result;
 }
 
+#define DebugCallInterrupt(Interrupt, Registers)  \
+    __asm__ volatile (                       \
+        "cli; hlt; int $" TO_STR(Interrupt)            \
+        :                                    \
+            "=a" ((Registers)->A.W),         \
+            "=b" ((Registers)->B.W),         \
+            "=c" ((Registers)->C.W),         \
+            "=d" ((Registers)->D.W),         \
+            "=S" ((Registers)->Si),          \
+            "=D" ((Registers)->Di)           \
+        :                                    \
+            "a" ((Registers)->A.W),          \
+            "b" ((Registers)->B.W),          \
+            "c" ((Registers)->C.W),          \
+            "d" ((Registers)->D.W),          \
+            "S" ((Registers)->Si),           \
+            "D" ((Registers)->Di)            \
+    );
+
+#define DebugCallInterruptWithSegments(Interrupt, Registers, Segments)  \
+    __asm__ volatile ("push %%es" ::);                             \
+    __asm__ volatile ("mov %%ax, %%es" :: "a" ((Segments)->Es));   \
+    DebugCallInterrupt(Interrupt, Registers);                           \
+    __asm__ volatile ("mov %%es, %%ax" : "=a" ((Segments)->Es) :); \
+    __asm__ volatile ("pop %%es" ::);
+
 DISKSTATUS
 ReadSectors(
     PMEDIA Media,
     LBA Lba,
     WORD SectorAmount,
-    LPVOID Target,
-    PWORD SectorsWritten)
+    LPVOID Target)
 {
     REGISTERS Registers;
     SEGMENTREGS Segments = GetCurrentSegmentRegisters();
@@ -82,7 +107,8 @@ ReadSectors(
         Registers.D.B.L = Media->BiosID;
         Segments.Es += (512 / 16);
         
-        CallInterruptWithSegments(0x13, &Registers, &Segments);
+        DebugCallInterruptWithSegments(0x13, &Registers, &Segments);
+        //DebugCallInterrupt(0x13, &Registers);
 
         if (Registers.A.B.H != DISK_SUCCESS)
             return AS(DISKSTATUS, Registers.A.B.H);

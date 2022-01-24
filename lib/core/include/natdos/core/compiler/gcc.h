@@ -23,6 +23,8 @@
 #define COMPILER_VERSION TO_STR(__GNUC__) "." TO_STR(__GNUC_MINOR__) "." TO_STR(__GNUC_PATCHLEVEL__)
 #define COMPILER_NAME "GCC " COMPILER_VERSION
 
+#define FREEZE() while (TRUE) { __asm__ volatile ("cli; hlt"); }
+
 #define INLINE inline
 #define STATIC static
 
@@ -88,6 +90,7 @@ typedef struct {
 } TYPEDEF_STRUCT(REGISTERS);
 
 typedef struct {
+    WORD Ds;
     WORD Es;
 } TYPEDEF_STRUCT(SEGMENTREGS);
 
@@ -124,19 +127,12 @@ GetCurrentSegmentRegisters(VOID)
 
 // Big big warning: This is like, suuuuper unstable and like it like DEFINITELY
 // shouldn't be used with Segments being a far pointer. Near pointers only
-// pweeeease
-// 
-/// VOID
-/// CallInterruptWithSegments(
-///     BYTE Interrupt,
-///     PREGISTERS Registers,
-///     PSEGMENTREGS Segments);
-#define CallInterruptWithSegments(Interrupt, Registers, Segments)  \
-    __asm__ volatile ("push %%es" ::);                             \
-    __asm__ volatile ("mov %%ax, %%es" :: "a" ((Segments)->Es));   \
-    CallInterrupt(Interrupt, Registers);                           \
-    __asm__ volatile ("mov %%es, %%ax" : "=a" ((Segments)->Es) :); \
-    __asm__ volatile ("pop %%es" ::);
+// pweeeease 
+VOID
+CallInterruptWithSegments(
+    BYTE Interrupt,
+    PREGISTERS Registers,
+    PSEGMENTREGS Segments);
 
 #define BACKEND_IMPLEMENTS_MEMORY_FUNCTIONS
 
@@ -164,16 +160,16 @@ FarCopyMemory(
     SIZE Size)
 {
     __asm__ volatile (
-        "push %%ds"     ASM_NEWLINE
-        "push %%es"     ASM_NEWLINE
-        "mov %0, %%ds"  ASM_NEWLINE
-        "mov %1, %%es"  ASM_NEWLINE
-        "rep movsb"     ASM_NEWLINE
-        "pop %%es"      ASM_NEWLINE
-        "pop %%ds"      ASM_NEWLINE
+        "push %%ds"       ASM_NEWLINE
+        "push %%es"       ASM_NEWLINE
+        "mov %%ax, %%ds"  ASM_NEWLINE
+        "mov %%bx, %%es"  ASM_NEWLINE
+        "rep movsb"       ASM_NEWLINE
+        "pop %%es"        ASM_NEWLINE
+        "pop %%ds"        ASM_NEWLINE
         ::
-            "R" (FP_SEGMENT(Source)),
-            "R" (FP_SEGMENT(Destination)),
+            "a" (FP_SEGMENT(Source)),
+            "b" (FP_SEGMENT(Destination)),
             "c" (Size),
             "S" (FP_OFFSET(Source)),
             "D" (FP_OFFSET(Destination))
@@ -217,12 +213,12 @@ SetFarMemoryBytes(
     SIZE Size)
 {
     __asm__ volatile (
-        "push %%es"     ASM_NEWLINE
-        "mov %0, %%es"  ASM_NEWLINE
-        "rep stosb"     ASM_NEWLINE
-        "pop %%es"      ASM_NEWLINE
+        "push %%es"       ASM_NEWLINE
+        "mov %%dx, %%es"  ASM_NEWLINE
+        "rep stosb"       ASM_NEWLINE
+        "pop %%es"        ASM_NEWLINE
         ::
-            "R" (FP_SEGMENT(Destination)),
+            "d" (FP_SEGMENT(Destination)),
             "D" (FP_OFFSET(Destination)),
             "c" (Size),
             "a" (Value)

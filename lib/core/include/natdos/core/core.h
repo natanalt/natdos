@@ -10,4 +10,6 @@
 #define UNIMPLEMENTED(msg) Panic("Unimplemented: " msg)
 #define UNREACHABLE(msg) Panic("Unreachable: " msg)
 
+#define MAKE_WORD(Lo, Hi) (AS_WORD(Hi) << 8 | (Lo))
+
 #endif
