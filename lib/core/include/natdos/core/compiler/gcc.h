@@ -98,6 +98,7 @@ STATIC INLINE SEGMENTREGS
 GetCurrentSegmentRegisters(VOID)
 {
     SEGMENTREGS Result;
+    __asm__ volatile ("mov %%ds, %%ax" : "=a" (Result.Ds) :);
     __asm__ volatile ("mov %%es, %%ax" : "=a" (Result.Es) :);
     return Result;
 }
@@ -125,9 +126,6 @@ GetCurrentSegmentRegisters(VOID)
             "D" ((Registers)->Di)            \
     );
 
-// Big big warning: This is like, suuuuper unstable and like it like DEFINITELY
-// shouldn't be used with Segments being a far pointer. Near pointers only
-// pweeeease 
 VOID
 CallInterruptWithSegments(
     BYTE Interrupt,
@@ -135,6 +133,7 @@ CallInterruptWithSegments(
     PSEGMENTREGS Segments);
 
 #define BACKEND_IMPLEMENTS_MEMORY_FUNCTIONS
+#ifdef BACKEND_IMPLEMENTS_MEMORY_FUNCTIONS
 
 #define ASM_NEWLINE "\n"
 
@@ -243,5 +242,7 @@ SetFarMemoryWords(
             "a" (Value)
     );
 }
+
+#endif
 
 #endif

@@ -55,32 +55,6 @@ LbaToChs(PMEDIA Media, LBA Lba)
     return Result;
 }
 
-#define DebugCallInterrupt(Interrupt, Registers)  \
-    __asm__ volatile (                       \
-        "cli; hlt; int $" TO_STR(Interrupt)            \
-        :                                    \
-            "=a" ((Registers)->A.W),         \
-            "=b" ((Registers)->B.W),         \
-            "=c" ((Registers)->C.W),         \
-            "=d" ((Registers)->D.W),         \
-            "=S" ((Registers)->Si),          \
-            "=D" ((Registers)->Di)           \
-        :                                    \
-            "a" ((Registers)->A.W),          \
-            "b" ((Registers)->B.W),          \
-            "c" ((Registers)->C.W),          \
-            "d" ((Registers)->D.W),          \
-            "S" ((Registers)->Si),           \
-            "D" ((Registers)->Di)            \
-    );
-
-#define DebugCallInterruptWithSegments(Interrupt, Registers, Segments)  \
-    __asm__ volatile ("push %%es" ::);                             \
-    __asm__ volatile ("mov %%ax, %%es" :: "a" ((Segments)->Es));   \
-    DebugCallInterrupt(Interrupt, Registers);                           \
-    __asm__ volatile ("mov %%es, %%ax" : "=a" ((Segments)->Es) :); \
-    __asm__ volatile ("pop %%es" ::);
-
 DISKSTATUS
 ReadSectors(
     PMEDIA Media,
@@ -90,12 +64,11 @@ ReadSectors(
 {
     REGISTERS Registers;
     SEGMENTREGS Segments = GetCurrentSegmentRegisters();
-    Segments.Es = FP_SEGMENT(Target);
-    Registers.B.W = FP_OFFSET(Target);
 
-    while (SectorAmount--)
+    for (WORD Current = 0; Current < SectorAmount; Current++, Lba++)
     {
-        CHS Chs = LbaToChs(Media, Lba++);
+        CHS Chs = LbaToChs(Media, Lba);
+
         if (Chs.Sector == INVALID_CHS_SECTOR)
             return DISK_BAD_SECTOR;
 
@@ -105,10 +78,10 @@ ReadSectors(
         Registers.C.W |= Chs.Sector & 0x3f;
         Registers.D.B.H = Chs.Head;
         Registers.D.B.L = Media->BiosID;
-        Segments.Es += (512 / 16);
+        Registers.B.W = FP_OFFSET(Target) + Current * 512;
+        Segments.Es = FP_SEGMENT(Target);
         
-        DebugCallInterruptWithSegments(0x13, &Registers, &Segments);
-        //DebugCallInterrupt(0x13, &Registers);
+        CallInterruptWithSegments(0x13, &Registers, &Segments);
 
         if (Registers.A.B.H != DISK_SUCCESS)
             return AS(DISKSTATUS, Registers.A.B.H);

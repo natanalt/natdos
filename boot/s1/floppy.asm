@@ -42,7 +42,7 @@ section .text
         .NtFlags:          db 0
         .Signature:        db 0x28
         .VolumeSerial:     dd 0xb00b1234
-        .VolumeLabel:      db "NatDOS Live"
+        .VolumeLabel:      db "NATDOS LIVE"
         .FsId:             db "FAT12   "
     
     ;;

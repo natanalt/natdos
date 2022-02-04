@@ -10,19 +10,14 @@ section .text
     ;;     PSEGMENTREGS Segments);
     global CallInterruptWithSegments
     CallInterruptWithSegments:
-        %push
-        %stacksize flat
-        %assign %$localsize 0
-        
-        %arg Interrupt:word, \
-             Registers:word, \
-             Segments:word
-    
-        %local SavedDi:word
+        %define Interrupt (bp + 4)
+        %define Registers (bp + 6)
+        %define Segments (bp + 8)
+        %define SavedDi (bp - 2)
 
         push bp
         mov bp, sp
-        sub sp, %$localsize
+        sub sp, 2 ; SavedDi
 
         push ds
         push es
@@ -33,40 +28,44 @@ section .text
         mov byte [.Vector], al
 
         mov di, word [Segments]
-        mov ds, word [di + 0]
-        mov es, word [di + 2]
+        mov ds, word [ss:di + 0]
+        mov es, word [ss:di + 2]
 
         mov di, word [Registers]
-        mov ax, word [di + 0]
-        mov bx, word [di + 2]
-        mov cx, word [di + 4]
-        mov dx, word [di + 6]
-        mov si, word [di + 8]
-        mov di, word [di + 10]
+        mov ax, word [ss:di + 0]
+        mov bx, word [ss:di + 2]
+        mov cx, word [ss:di + 4]
+        mov dx, word [ss:di + 6]
+        mov si, word [ss:di + 8]
+        mov di, word [ss:di + 10]
 
         .Opcode: db 0xcd
         .Vector: db 0x03
 
         mov word [SavedDi], di
         mov di, word [Segments]
-        mov word [di + 0], ax
-        mov word [di + 2], bx
-        mov word [di + 4], cx
-        mov word [di + 6], dx
-        mov word [di + 8], si
+        mov word [ss:di + 0], ax
+        mov word [ss:di + 2], bx
+        mov word [ss:di + 4], cx
+        mov word [ss:di + 6], dx
+        mov word [ss:di + 8], si
         mov ax, word [SavedDi]
-        mov word [di + 10], ax
+        mov word [ss:di + 10], ax
 
         mov di, word [Segments]
-        mov word [di + 0], ds
-        mov word [di + 2], es
+        mov word [ss:di + 0], ds
+        mov word [ss:di + 2], es
 
         pop si
         pop di
         pop es
         pop ds
 
-        add sp, %$localsize
+        add sp, 2 ; SavedDi
         pop bp
         ret
-        %pop
+        
+        %undef Interrupt
+        %undef Registers
+        %undef Segments
+        %undef SavedDi
