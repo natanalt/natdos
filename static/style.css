@@ -1,0 +1,40 @@
+
+body {
+    background: #221522;
+    color: #efefef;
+    font-family: sans-serif;
+    font-size: 1.1em;
+}
+
+main {
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+h1 {
+    text-align: center;
+}
+
+#vm-area {
+    margin-top: 30px;
+    margin-bottom: 30px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 640px;
+}
+
+#v86-screen {
+    width: 640px;
+    height: 350px;
+    background: #000000;
+}
+
+footer {
+    border-top: 2px solid rgba(255, 255, 255, 0.5);
+    margin-top: 40px;
+    padding-top: 10px;
+    font-size: 0.75em;
+    text-align: center;
+}

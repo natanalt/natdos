@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>NatDOS</title>
+        <meta charset="UTF-8">
+        
+        <link rel="stylesheet" href="style.css">
+        <link rel="icon" href="favicon.ico">
+        <meta property="og:title" content="NatDOS" />
+        <meta property="og:description" content="A dum little OS" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="/logo.png" />
+
+        <script src="libv86.js"></script>
+        <script src="main.js"></script>
+    </head>
+    <body>
+        <main>
+            <header>
+                <h1>✨ NatDOS ✨</h1>
+            </header>
+            <section>
+                <p>
+                    NatDOS is a project developed by me,
+                    <a href="https://github.com/natanalt" title="My GitHub profile">Natalia Cholewa</a>,
+                    with the goal of creating an MS-DOS compatible operating system, unfortunately in C.
+                </p>
+                <p>
+                    While it is still extremely broken, below you can run a small VM running the image.
+                    It likely won't boot but whatever ¯\_(ツ)_/¯
+                </p>
+                <div id="vm-area">
+                    <button id="start-vm-button">Start NatDOS live VM</button>
+                    <div id="v86-screen">
+                        <div style="white-space: pre; font: 14px monospace; line-height: 14px"></div>
+                        <canvas style="display: none"></canvas>
+                    </div>
+                </div>
+                <p>
+                    Acknowledgments:
+                    <ul>
+                        <li>
+                            <a href="https://copy.sh/v86" title="v86 website">v86 emulator</a> powering the VM.
+                            Here's its <a href="v86-LICENSE" title="v86 license">license file</a>.
+                        </li>
+                        <li>
+                            BIOS images I ripped from the v86 website have the
+                            <a href="bios-LICENSE">LGPL</a> attached to them.
+                        </li>
+                    </ul>
+                </p>
+                <footer>
+                    Made with ❤️ and antidepressants<br>Someday I'll improve this website lol
+                </footer>
+            </section>
+        </main>
+    </body>
+</html>
