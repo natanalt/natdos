@@ -6,11 +6,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create output directory
-        run: 
-          - mkdir output
-          - mkdir output/build
-
       - name: Checkout website contents
         uses: actions/checkout@v2
         with:
@@ -23,35 +18,38 @@ jobs:
           path: natdos
 
       - name: Setup NatDOS dependencies
-        run:
-          - sudo add-apt-repository ppa:tkchia/build-ia16
-          - sudo apt-get update
-          - sudo apt-get install -y gcc-ia16-elf
-          - sudo apt-get install -y mtools
+        run: |
+          sudo add-apt-repository ppa:tkchia/build-ia16
+          sudo apt-get update
+          sudo apt-get install -y gcc-ia16-elf
+          sudo apt-get install -y mtools
+          sudo apt-get install -y nasm
       
       - name: Build the NatDOS live floppy
-        run:
-          - cd natdos
-          - ./build.sh
-          - cp out/natdos.flp ../output/natdos.flp
+        run: |
+          cd natdos
+          ./build.sh
+          cd ..
+          mkdir -p output/build
+          cp natdos/out/natdos.flp output/
       
       - name: Download v86 and its BIOS builds
-        run:
-          - cd output
-          - cd build
-          - wget https://github.com/copy/v86/releases/download/latest/v86.wasm
-          - wget https://github.com/copy/v86/releases/download/latest/v86-fallback.wasm
-          - cd ..
-          - wget https://github.com/copy/v86/releases/download/latest/libv86.js
-          - wget https://raw.githubusercontent.com/copy/v86/master/bios/seabios.bin
-          - wget https://raw.githubusercontent.com/copy/v86/master/bios/vgabios.bin
-          - wget https://raw.githubusercontent.com/copy/v86/master/LICENSE -O v86-LICENSE
-          - wget https://raw.githubusercontent.com/copy/v86/master/bios/COPYING.LESSER -O bios-LICENSE
-          - cd ..
+        run: |
+          cd output
+          cd build
+          wget https://github.com/copy/v86/releases/download/latest/v86.wasm
+          wget https://github.com/copy/v86/releases/download/latest/v86-fallback.wasm
+          cd ..
+          wget https://github.com/copy/v86/releases/download/latest/libv86.js
+          wget https://raw.githubusercontent.com/copy/v86/master/bios/seabios.bin
+          wget https://raw.githubusercontent.com/copy/v86/master/bios/vgabios.bin
+          wget https://raw.githubusercontent.com/copy/v86/master/LICENSE -O v86-LICENSE
+          wget https://raw.githubusercontent.com/copy/v86/master/bios/COPYING.LESSER -O bios-LICENSE
+          cd ..
 
       - name: Copy static website files
-        run:
-          - cp -R static/** output
+        run: |
+          cp -R static/** output
 
       - name: Deploy to GitHub pages
         uses: JamesIves/github-pages-deploy-action@v4.2.3
