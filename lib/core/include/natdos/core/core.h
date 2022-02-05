@@ -3,6 +3,7 @@
 
 #include "compiler/compiler.h"
 #include "memory.h"
+#include "fmt.h"
 
 // TODO: Panic impl
 #define Panic(...) while(1);

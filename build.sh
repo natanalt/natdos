@@ -8,7 +8,7 @@ set -e
 CC=ia16-elf-gcc
 AR=ia16-elf-ar
 
-CFLAGS="-O3 -Ilib/core/include -Ilib/fat/include -DCOMPILER_TYPE=COMPILER_GCC -mcmodel=tiny -std=gnu99 -nostdlib -ffreestanding -Lout/lib"
+CFLAGS="-O3 -Ilib/core/include -Ilib/fat/include -DCOMPILER_TYPE=COMPILER_GCC -mcmodel=tiny -std=gnu99 -nostdlib -ffreestanding -Lout/lib -Wall -Wextra"
 
 mkdir -p out
 mkdir -p out/obj/lib/core
@@ -21,6 +21,7 @@ echo "Building core library..."
 nasm -f elf32    -o out/obj/lib/core/gcc.asm.o lib/core/src/compiler/gcc.asm
 $CC $CFLAGS -c   -o out/obj/lib/core/gcc.c.o   lib/core/src/compiler/gcc.c
 $CC $CFLAGS -c   -o out/obj/lib/core/memory.o  lib/core/src/memory.c
+$CC $CFLAGS -c   -o out/obj/lib/core/fmt.o     lib/core/src/fmt.c
 $AR rcs out/lib/libcore.a out/obj/lib/core/*.o
 
 echo "Building bootloader..."

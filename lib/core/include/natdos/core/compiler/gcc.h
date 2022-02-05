@@ -1,11 +1,12 @@
 #ifndef CORE_COMPILER_GCC_H
 #define CORE_COMPILER_GCC_H
 
-#include <stdint.h>
-
 #ifndef __GNUC__
     #error Attempt to include GCC core header on a non GCC compiler
 #endif
+
+#include <stdint.h>
+#include <stdarg.h>
 
 #ifndef VSCODE
     #ifndef __FAR
