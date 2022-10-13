@@ -1,5 +1,6 @@
 #include "fat.h"
 #include "screen.h"
+#include <natdos/core/text.h>
 
 static struct {
     PMEDIA Media;
@@ -78,41 +79,158 @@ InitFat(PMEDIA Media)
     FatState.SectorsPerCluster = BootRecord.SectorsPerCluster;
     FatState.ReservedSectors = BootRecord.ReservedSectors;
     FatState.SectorsPerFat = BootRecord.SectorsPerFat;
-    FatState.RootDirSectors = (BootRecord.DentryCount * sizeof(FATDENTRY)) / 512;
+    FatState.FatAmount = BootRecord.FatTableCount;
+    FatState.RootDirSectors = BootRecord.DentryCount / 16;
 }
 
-STATIC BOOL
-CompareFilenames(PCSTR Name, PFATDENTRY Dentry)
+STATIC INLINE VOID
+ConvertFilenameToRaw(PCSTR Name, PSTR Target)
 {
-    SIZE Index;
-    SIZE NameIndex = 0;
-
-    Index = 0;
-    do
+    PSTR CurrentOut = Target;
+    while (*Name)
     {
-        if (Name[NameIndex++] != Dentry->FileName[Index++])
+        CHAR Next = *(Name++);
+
+        if (Next == '.')
         {
-            return FALSE;
+            CurrentOut = Target + 8;
+            continue;
         }
-    } while (Name[NameIndex] != '.' && Index < 8);
 
-    NameIndex++;
-
-    TODO("finish this");
-    return TRUE;
+        *(CurrentOut++) = AsciiToUpper(Next);
+    }
 }
 
 BOOL
 FindRootFile(PCSTR Name, PFATDENTRY Result)
 {
-    UNREFERENCED_PARAMETER(Name);
-    UNREFERENCED_PARAMETER(Result);
+    FATDENTRY Dentries[512 / sizeof(FATDENTRY)];
+
+    CHAR RawFilename[11];
+    ConvertFilenameToRaw(Name, RawFilename);
+
+    WORD Base = FatState.ReservedSectors;
+    Base += FatState.FatAmount * FatState.SectorsPerFat;
+
+    for (WORD Sector = 0; Sector < FatState.RootDirSectors; Sector++)
+    {
+        DISKSTATUS Status = ReadSectors(
+            FatState.Media,
+            Base + Sector,
+            1,
+            Dentries
+        );
+        
+        if (!IS_DISK_SUCCESS(Status))
+        {
+            PrintCriticalError("couldn't read a dentry sector");
+            FREEZE();
+        }
+
+        for (WORD Index = 0; Index < 512 / 32; Index++)
+        {
+            BOOL AreEqual = CompareMemoryBytes(
+                Dentries[Index].FileName,
+                RawFilename,
+                sizeof(RawFilename)
+            );
+
+            if (AreEqual)
+            {
+                *Result = Dentries[Index];
+                return TRUE;
+            }
+        }
+    }
+
     return FALSE;
 }
 
-VOID
-ReadFile(PFATDENTRY Entry, PVOID Target)
+STATIC VOID
+ReadCacheSector(LBA Lba)
 {
-    UNREFERENCED_PARAMETER(Entry);
-    UNREFERENCED_PARAMETER(Target);
+    if (FatState.CachedBuffer == Lba)
+        return;
+    FatState.CachedBuffer = Lba;
+
+    DISKSTATUS Status = ReadSectors(
+        FatState.Media,
+        Lba,
+        1,
+        &FatState.SectorBuffer
+    );
+
+    if (!IS_DISK_SUCCESS(Status))
+    {
+        PrintCriticalError("couldn't read a sector");
+        FREEZE();
+    }
+}
+
+STATIC WORD
+ReadClusterValue(WORD Index)
+{
+    WORD AbsoluteOffset = (Index * 3) / 2;
+    LBA SectorLba = AS(LBA, FatState.ReservedSectors) + AbsoluteOffset / 512;
+    WORD InnerOffset = AbsoluteOffset % 512;
+
+    ReadCacheSector(SectorLba);
+
+    WORD Value = *AS(PWORD, FatState.SectorBuffer + InnerOffset);
+
+    if (Index % 2 == 0)
+        return Value & 0xfff;
+    else
+        return Value >> 4;
+}
+
+STATIC VOID
+ReadCluster(WORD Index, PVOID Target)
+{
+    LBA Lba = AS(LBA, Index)
+        - 2
+        + FatState.SectorsPerFat * FatState.FatAmount
+        + FatState.RootDirSectors
+        + FatState.ReservedSectors;
+    
+    DISKSTATUS Status = ReadSectors(
+        FatState.Media,
+        Lba,
+        FatState.SectorsPerCluster,
+        Target
+    );
+
+    if (!IS_DISK_SUCCESS(Status))
+    {
+        CHAR FormatBuffer[128];
+        FormatString(
+            "Cluster read error. (%x)",
+            PBUFFER(FormatBuffer),
+            AS_WORD(Status)
+        );
+
+        PrintCriticalError(FormatBuffer);
+        FREEZE();
+    }
+}
+
+VOID
+ReadFile(PFATDENTRY Entry, PVOID VTarget)
+{
+    WORD CurrentCluster = Entry->ClusterLo;
+    PBYTE Target = AS(PBYTE, VTarget);
+
+    while (CurrentCluster < 0xff8)
+    {
+        if (CurrentCluster == 0xff7)
+        {
+            PrintCriticalError("Encoutered a bad sector.");
+            FREEZE();
+        }
+
+        ReadCluster(CurrentCluster, Target);
+        CurrentCluster = ReadClusterValue(CurrentCluster);
+
+        Target += FatState.SectorsPerCluster * 512;
+    }
 }

@@ -27,6 +27,7 @@ typedef struct {
     WORD ClusterLo;
     DWORD FileSize; 
 } PACKED TYPEDEF_STRUCT(FATDENTRY);
+STATIC_ASSERT(sizeof(FATDENTRY) == 32, "FAT directory entry size isn't 32");
 
 VOID
 InitFat(PMEDIA Media);
@@ -34,6 +35,7 @@ InitFat(PMEDIA Media);
 BOOL
 FindRootFile(PCSTR Name, PFATDENTRY Result);
 
+/// Target must have a sector aligned size
 VOID
 ReadFile(PFATDENTRY Entry, PVOID Target);
 

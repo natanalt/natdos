@@ -23,5 +23,5 @@ section .init
 
 section .bss
     Stack:
-        resb 4096
+        resb 8192
         .Top:

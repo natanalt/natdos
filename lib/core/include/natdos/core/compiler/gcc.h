@@ -36,7 +36,7 @@
 #define INLINE inline
 #define STATIC static
 
-#define AS(t, ...) ((t) __VA_ARGS__)
+#define AS(t, ...) ((t) (__VA_ARGS__))
 #define AS_BYTE(...) AS(BYTE, (__VA_ARGS__))
 #define AS_WORD(...) AS(WORD, (__VA_ARGS__))
 #define AS_DWORD(...) AS(DWORD, (__VA_ARGS__))
@@ -67,14 +67,23 @@
 TYPEDEFS(void, VOID);
 TYPEDEFS(const void, CVOID);
 TYPEDEFS(uint8_t, BYTE);
+TYPEDEFS(const uint8_t, CBYTE);
 TYPEDEFS(int8_t, SBYTE);
+TYPEDEFS(const int8_t, CSBYTE);
 TYPEDEFS(unsigned int, WORD);
+TYPEDEFS(const unsigned int, CWORD);
 TYPEDEFS(signed int, SWORD);
+TYPEDEFS(const signed int, CSWORD);
 TYPEDEFS(uint32_t, DWORD);
+TYPEDEFS(const uint32_t, CDWORD);
 TYPEDEFS(int32_t, SDWORD);
+TYPEDEFS(const int32_t, CSDWORD);
 TYPEDEFS(uint16_t, SIZE);
+TYPEDEFS(const uint16_t, CSIZE);
 TYPEDEFS(BYTE, BOOL);
+TYPEDEFS(const BYTE, CBOOL);
 TYPEDEFS(char, CHAR);
+TYPEDEFS(const char, CCHAR);
 TYPEDEF_POINTERS(char, STR);
 TYPEDEF_POINTERS(const char, CSTR);
 
@@ -155,7 +164,7 @@ CopyMemory(
     SIZE Size)
 {
     __asm__ volatile (
-        "rep movsb"
+        "push %%es; push %%ds; pop %%es; rep movsb; pop %%es"
         ::
             "c" (Size),
             "S" (Source),
@@ -193,7 +202,7 @@ SetMemoryBytes(
     SIZE Size)
 {
     __asm__ volatile (
-        "rep stosb"
+        "push %%es; push %%ds; pop %%es; rep stosb; pop %%es"
         ::
             "c" (Size),
             "D" (Destination),
@@ -208,7 +217,7 @@ SetMemoryWords(
     SIZE Size)
 {
     __asm__ volatile (
-        "rep stosw"
+        "push %%es; push %%ds; pop %%es; rep stosw; pop %%es"
         ::
             "c" (Size),
             "D" (Destination),
@@ -252,6 +261,48 @@ SetFarMemoryWords(
             "c" (Size),
             "a" (Value)
     );
+}
+
+STATIC INLINE BOOL
+CompareMemoryBytes(
+    PCVOID BlockA,
+    PCVOID BlockB,
+    SIZE Size)
+{
+    // TODO: a good implementation of CompareMemoryBytes and friends
+    
+    PCBYTE CBlockA = AS(PCBYTE, BlockA);
+    PCBYTE CBlockB = AS(PCBYTE, BlockB);
+
+    while (Size-- > 0)
+    {
+        if (*(CBlockA++) != *(CBlockB++))
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+STATIC INLINE BOOL
+CompareFarMemoryBytes(
+    LPCVOID BlockA,
+    LPCVOID BlockB,
+    SIZE Size)
+{
+    LPCBYTE CBlockA = AS(LPCBYTE, BlockA);
+    LPCBYTE CBlockB = AS(LPCBYTE, BlockB);
+
+    while (Size-- > 0)
+    {
+        if (*(CBlockA++) != *(CBlockB++))
+        {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 #endif

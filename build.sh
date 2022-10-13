@@ -8,7 +8,7 @@ set -e
 CC=ia16-elf-gcc
 AR=ia16-elf-ar
 
-CFLAGS="-O3 -Ilib/core/include -Ilib/fat/include -DCOMPILER_TYPE=COMPILER_GCC -mcmodel=tiny -std=gnu11 -nostdlib -ffreestanding -Lout/lib -Wall -Wextra"
+CFLAGS="-O3 -Ilib/core/include -Ilib/fat/include -DCOMPILER_TYPE=COMPILER_GCC -mcmodel=tiny -std=gnu11 -nostdlib -ffreestanding -funsigned-char -Lout/lib -Wall -Wextra"
 
 mkdir -p out
 mkdir -p out/obj/lib/core

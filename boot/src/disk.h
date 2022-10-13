@@ -77,6 +77,6 @@ ReadSectors(
     PMEDIA Media,
     LBA Lba,
     WORD SectorAmount,
-    LPVOID Target);
+    PVOID Target);
 
 #endif

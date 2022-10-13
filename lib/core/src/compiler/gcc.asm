@@ -23,6 +23,11 @@ section .text
         push es
         push si
         push di
+        
+        push dx
+        push cx
+        push bx
+        push ax
 
         mov ax, word [Interrupt]
         mov byte [.Vector], al
@@ -55,6 +60,11 @@ section .text
         mov di, word [Segments]
         mov word [ss:di + 0], ds
         mov word [ss:di + 2], es
+
+        pop ax
+        pop bx
+        pop cx
+        pop dx
 
         pop si
         pop di

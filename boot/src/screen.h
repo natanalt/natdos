@@ -68,6 +68,12 @@ WriteAt(
     PCSTR Text);
 
 VOID
+WriteAtCentered(
+    WORD Y,
+    BYTE Attribute,
+    PCSTR Text);
+
+VOID
 PrintCriticalError(PCSTR String);
 
 #endif

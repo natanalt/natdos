@@ -70,10 +70,9 @@ ReadSectors(
     PMEDIA Media,
     LBA Lba,
     WORD SectorAmount,
-    LPVOID Target)
+    PVOID Target)
 {
     REGISTERS Registers = {0};
-    SEGMENTREGS Segments = GetCurrentSegmentRegisters();
 
     for (WORD Current = 0; Current < SectorAmount; Current++, Lba++)
     {
@@ -84,14 +83,23 @@ ReadSectors(
 
         Registers.A.B.H = 0x02;
         Registers.A.B.L = 1;
-        Registers.C.W = Chs.Cylinder << 6;
-        Registers.C.W |= Chs.Sector & 0x3f;
+        Registers.C.B.H = Chs.Cylinder & 0xff;
+        Registers.C.B.L = Chs.Sector | ((Chs.Cylinder >> 2) & 0xc0);
         Registers.D.B.H = Chs.Head;
         Registers.D.B.L = Media->BiosID;
-        Registers.B.W = FP_OFFSET(Target) + Current * 512;
-        Segments.Es = FP_SEGMENT(Target);
-        
-        CallInterruptWithSegments(0x13, &Registers, &Segments);
+        Registers.B.W = AS_WORD(Target) + Current * 512;
+
+        //CallInterrupt(0x13, &Registers);
+        __asm__ volatile (
+            "push %%es; push %%ds; pop %%es; int $0x13; pop %%es"
+            :
+                "=a" (Registers.A.W)
+            :
+                "a" (Registers.A.W),
+                "b" (Registers.B.W),
+                "c" (Registers.C.W),
+                "d" (Registers.D.W)
+        );
 
         if (Registers.A.B.H != DISK_SUCCESS)
             return AS(DISKSTATUS, Registers.A.B.H);

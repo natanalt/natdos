@@ -41,6 +41,18 @@ SetFarMemoryWords(
     WORD Value,
     SIZE Size);
 
+BOOL
+CompareMemoryBytes(
+    PCVOID BlockA,
+    PCVOID BlockB,
+    SIZE Size);
+
+BOOL
+CompareFarMemoryBytes(
+    LPCVOID BlockA,
+    LPCVOID BlockB,
+    SIZE Size);
+
 #endif
 
 SIZE

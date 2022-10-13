@@ -16,8 +16,11 @@
 ///     FormatString("Hello", (Buffer), sizeof(Buffer))
 #define PBUFFER(buf) (buf), sizeof(buf)
 
-// TODO: Panic impl
-#define CRASH(...) while(1);
+VOID
+CrashHandler(PCSTR Message);
+
+#define CRASH(msg) CrashHandler(TO_STR(msg));
+#define ASSERT(expr) CRASH("Assertion failed")
 #define TODO(msg) CRASH("Todo: " msg)
 #define UNIMPLEMENTED(msg) CRASH("Unimplemented: " msg)
 #define UNREACHABLE(msg) CRASH("Unreachable: " msg)

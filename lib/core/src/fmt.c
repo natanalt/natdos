@@ -131,7 +131,7 @@ FormatString(
 {
     va_list Variadic;
     SIZE Result;
-    FSTRDATA Data = AS(FSTRDATA, { Buffer, BufferSize });
+    FSTRDATA Data = (FSTRDATA) { Buffer, BufferSize };
     va_start(Variadic, BufferSize);
     Result = FormatWithCallback(Format, FormatStringCallback, &Data, Variadic);
     va_end(Variadic);

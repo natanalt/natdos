@@ -100,6 +100,17 @@ WriteAt(
 }
 
 VOID
+WriteAtCentered(
+    WORD Top,
+    BYTE Attribute,
+    PCSTR String)
+{
+    SIZE Length = GetStringSize(String);
+    BYTE LeftX = (SCREEN_WIDTH / 2) - (Length / 2);
+    WriteAt(POS(LeftX, Top), Attribute, String);
+}
+
+VOID
 PrintCriticalError(PCSTR String)
 {
     WORD Top = 11;
