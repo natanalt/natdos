@@ -6,10 +6,10 @@
 VOID
 InitAllocator(VOID);
 
-VOID*
+PVOID
 AllocateMemory(SIZE Bytes);
 
-VOID*
-FreeMemory(VOID* Base);
+VOID
+FreeMemory(PVOID Base);
 
 #endif

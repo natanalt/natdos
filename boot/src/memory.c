@@ -22,7 +22,8 @@ AllocateMemory(SIZE Bytes)
     return Result;
 }
 
-VOID*
-FreeMemory(VOID* Base)
+VOID
+FreeMemory(PVOID Base)
 {
+    UNREFERENCED_PARAMETER(Base);
 }

@@ -5,14 +5,16 @@
 
 TYPEDEFS(DWORD, LBA);
 
-#define ID_FLOPPY_A AS(BYTE, 0)
-#define ID_FLOPPY_B AS(BYTE, 1)
+#define ID_FLOPPY_A AS(BYTE, 0) // aka. A:
+#define ID_FLOPPY_B AS(BYTE, 1) // aka. B:
 
 #define HDD_BIT 0x80
-#define ID_HDD_A AS(BYTE, 0x80)
+#define ID_HDD_A AS(BYTE, 0x80) // aka. C:
 #define ID_HDD_B AS(BYTE, 0x81)
 
-#define UNKNOWN_TOTAL_SECTORS -1
+// The filesystem driver will detect such a low value and try fetching data
+// from the boot sector. Not great, not terrible
+#define UNKNOWN_TOTAL_SECTORS AS_DWORD(-1)
 
 typedef struct {
     BYTE BiosID;
@@ -61,7 +63,7 @@ typedef enum {
 
 #define IS_DISK_SUCCESS(x) (AS(DISKSTATUS, x) == DISK_SUCCESS)
 
-DISKSTATUS
+VOID
 InitMedia(BYTE BiosID, PMEDIA Target);
 
 DISKSTATUS

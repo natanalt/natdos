@@ -16,7 +16,7 @@ InitScreen(VOID)
 {
     // Enable high intensity colour
     // TODO: configure the CGA manually instead of using the BIOS
-    REGISTERS Registers;
+    REGISTERS Registers = {0};
     Registers.A.W = 0x1003;
     Registers.B.W = 0;
     CallInterrupt(0x10, &Registers);
@@ -33,7 +33,8 @@ ClearScreen(VOID)
     SetFarMemoryWords(
         MAKE_FAR(0xb800, 0),
         CELL(' ', ATTRIBUTE(WHITE, BLACK)),
-        SCREEN_WIDTH * SCREEN_HEIGHT);
+        SCREEN_WIDTH * SCREEN_HEIGHT
+    );
 }
 
 VOID
@@ -52,7 +53,7 @@ IsScreenEnabled(VOID)
 VOID
 MoveCursor(CONPOS Position)
 {
-    REGISTERS Registers;
+    REGISTERS Registers = {0};
     Registers.A.W = 0x0200;
     Registers.B.W = 0;
     Registers.D.B.H = Position.Y;
@@ -71,7 +72,7 @@ GetCursorPosition(VOID)
 VOID
 SetCursorVisible(BOOL Visible)
 {
-    REGISTERS Registers;
+    REGISTERS Registers = {0};
     Registers.A.W = 0x0100;
     Registers.C.W = Visible ? 0x0607 : 0x2000;
     CallInterrupt(0x10, &Registers);
@@ -94,7 +95,7 @@ WriteAt(
     LPWORD CurrentAddr = GetBufferAddressFor(Position);
     CHAR CurrentChar;
 
-    while (CurrentChar = *(Text++))
+    while ((CurrentChar = *(Text++)))
         *(CurrentAddr++) = CELL(CurrentChar, Attribute);
 }
 

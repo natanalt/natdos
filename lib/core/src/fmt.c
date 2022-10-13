@@ -16,47 +16,37 @@ FormatWithCallback(
     va_list Variadic)
 {
     BOOL ParsingParameter = FALSE;
+    SIZE Index = 0;
     SIZE TotalWritten = 0;
-    for (CHAR Current = *Format; *Format; Format++)
-    {
-        if (Current == '%')
-        {
-            if (ParsingParameter)
-            {
-                Callback(UserData, TotalWritten, '%');
-                TotalWritten += 1;
-                ParsingParameter = FALSE;
-            }
-            else
-            {
-                ParsingParameter = TRUE;
-                continue;
-            }
-        }
-        else if (ParsingParameter)
-        {
-            WORD Word;
-            LPCSTR String;
-            switch (Current)
-            {
-                case 'd':
-                    Word = va_arg(Variadic, WORD);
-                    if (Word == 0)
-                    {
-                        Callback(UserData, TotalWritten++, '0');
-                    }
-                    else
-                    {
-                        CHAR Buffer[sizeof("65535") - 1] = {'0'};
-                        SIZE Current = 4;
 
-                        while (Word != 0)
+    while (Format[Index] != 0)
+    {
+        CHAR Next = Format[Index++];
+
+        if (ParsingParameter)
+        {
+            switch (Next)
+            {
+                case 's':
+                {
+                    LPCSTR S = va_arg(Variadic, LPCSTR);
+                    while (*S) Callback(UserData, TotalWritten++, *(S++));
+                    break;
+                }
+                case 'u':
+                {
+                    WORD Value = va_arg(Variadic, WORD);
+                    if (Value != 0)
+                    {
+                        CHAR Buffer[] = { '6', '5', '5', '3', '5' };
+                        SIZE Current = sizeof(Buffer) - 1;
+
+                        while (Value != 0)
                         {
-                            WORD Digit = Word % 10;
-                            Word /= 10;
+                            WORD Digit = Value % 10;
+                            Value /= 10;
                             Buffer[Current--] = Digit + '0';
                         }
-
                         Current++;
 
                         for (; Current < sizeof(Buffer); Current++)
@@ -64,40 +54,49 @@ FormatWithCallback(
                             Callback(UserData, TotalWritten++, Buffer[Current]);
                         }
                     }
-                    break;
-                case 'x':
-                    Word = va_arg(Variadic, WORD);
-                    Callback(UserData, TotalWritten++, Digits[(Word >> 12) & 0xf]);
-                    Callback(UserData, TotalWritten++, Digits[(Word >> 8) & 0xf]);
-                    Callback(UserData, TotalWritten++, Digits[(Word >> 4) & 0xf]);
-                    Callback(UserData, TotalWritten++, Digits[(Word >> 0) & 0xf]);
-                    break;
-                case 'c':
-                    Callback(UserData, TotalWritten++, va_arg(Variadic, CHAR));
-                    break;
-                case 's':
-                    String = va_arg(Variadic, LPCSTR);
-                    while (*String)
+                    else
                     {
-                        Callback(UserData, TotalWritten++, *(String++));
+                        Callback(UserData, TotalWritten++, '0');
                     }
                     break;
-                default:
-                    Panic("Unknown format parameter")
+                }
+                case 'c':
+                {
+                    // Minimum size for a stack value is WORD, hence we fetch
+                    // a word and then just cast it to CHAR
+                    CHAR Value = AS(CHAR, va_arg(Variadic, WORD));
+                    Callback(UserData, TotalWritten++, Value);
                     break;
+                }
+                case 'x':
+                {
+                    WORD Value = va_arg(Variadic, WORD);
+                    Callback(UserData, TotalWritten++, Digits[(Value >> 12) & 0xf]);
+                    Callback(UserData, TotalWritten++, Digits[(Value >> 8) & 0xf]);
+                    Callback(UserData, TotalWritten++, Digits[(Value >> 4) & 0xf]);
+                    Callback(UserData, TotalWritten++, Digits[(Value >> 0) & 0xf]);
+                    break;
+                }
             }
             ParsingParameter = FALSE;
         }
+        else if (Next == '%')
+        {
+            ParsingParameter = TRUE;
+        }
         else
         {
-            Callback(UserData, TotalWritten++, Current);
+            Callback(UserData, TotalWritten++, Next);
         }
     }
 
     if (ParsingParameter)
     {
-        Panic("EOF while parsing a format specifier");
+        CRASH("EOF while parsing a format specifier");
     }
+
+    // Final NUL byte
+    Callback(UserData, TotalWritten++, 0);
 
     return TotalWritten;
 }
@@ -118,7 +117,7 @@ FormatStringCallback(
     LPFSTRDATA Data = AS(LPFSTRDATA, UserData);
     if (Index >= Data->BufferSize)
     {
-        Panic("Buffer overflow in FormatStringCallback");
+        CRASH("Buffer overflow in FormatStringCallback");
     }
     Data->Buffer[Index] = Next;
 }

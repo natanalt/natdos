@@ -12,7 +12,7 @@ BootloaderMain(BYTE BootDeviceId)
 
     InitScreen();
     InitAllocator();
-    InitMedia(0x00, &BootDevice);
+    InitMedia(BootDeviceId, &BootDevice);
     InitFat(&BootDevice);
 
     if (!FindRootFile("BOOTLOGO.SYS", &BootLogoFile))

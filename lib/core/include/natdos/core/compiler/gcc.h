@@ -26,6 +26,13 @@
 
 #define FREEZE() while (TRUE) { __asm__ volatile ("cli; hlt"); }
 
+#ifndef VSCODE
+    #define STATIC_ASSERT(Expr, Message) _Static_assert(Expr, Message)
+#else
+    // Static assertions break with IntelliSense for some reason
+    #define STATIC_ASSERT(Expr, Message)
+#endif
+
 #define INLINE inline
 #define STATIC static
 
@@ -58,10 +65,11 @@
 #define PACKED __attribute__((packed))
 
 TYPEDEFS(void, VOID);
+TYPEDEFS(const void, CVOID);
 TYPEDEFS(uint8_t, BYTE);
 TYPEDEFS(int8_t, SBYTE);
-TYPEDEFS(uint16_t, WORD);
-TYPEDEFS(int16_t, SWORD);
+TYPEDEFS(unsigned int, WORD);
+TYPEDEFS(signed int, SWORD);
 TYPEDEFS(uint32_t, DWORD);
 TYPEDEFS(int32_t, SDWORD);
 TYPEDEFS(uint16_t, SIZE);
@@ -138,10 +146,12 @@ CallInterruptWithSegments(
 
 #define ASM_NEWLINE "\n"
 
+// TODO: optimize copy/set functions
+
 STATIC INLINE VOID
 CopyMemory(
     PVOID Destination,
-    PVOID Source,
+    PCVOID Source,
     SIZE Size)
 {
     __asm__ volatile (
